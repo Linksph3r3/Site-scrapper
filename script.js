@@ -67,12 +67,15 @@ async function fetchPage(url) {
 
 function extractImages(doc, pageUrl) {
     const imageUrls = [];
-    const tags = doc.querySelectorAll("img");
+
+    // XenForo user-posted images ONLY
+    const tags = doc.querySelectorAll(".bbWrapper img");
 
     tags.forEach(img => {
         let src = img.getAttribute("src");
         if (!src) return;
 
+        // Fix relative URLs
         if (!src.startsWith("http")) {
             try {
                 src = new URL(src, pageUrl).href;
@@ -86,6 +89,7 @@ function extractImages(doc, pageUrl) {
 
     return imageUrls;
 }
+
 
 function extractLinks(doc, pageUrl, baseDomain) {
     const links = [];
