@@ -117,7 +117,8 @@ async function downloadZip() {
     setTimeout(() => iframe.remove(), 2000);
   };
 
-  reader.readAsDataURL(zipBlob); // triggers download automatically on iOS
+  reader.readAsDataURL(new File([zipBlob], "images.zip", { type: "application/zip" }));
+ // triggers download automatically on iOS
 }
 
 
