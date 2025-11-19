@@ -9,13 +9,20 @@ document.getElementById("mode-html").onclick = () => {
   document.getElementById("html-section").classList.remove("hidden");
 };
 
-// ---------- URL MODE ----------
+// ---------- URL MODE (with CORS bypass) ----------
 document.getElementById("ripUrl").onclick = async () => {
   const url = document.getElementById("pageUrl").value.trim();
   if (!url) return alert("Enter a URL");
 
-  const html = await fetch(url).then(r => r.text());
-  processHTML(html);
+  const proxy = "https://api.allorigins.win/raw?url=";
+
+  try {
+    const html = await fetch(proxy + encodeURIComponent(url)).then(r => r.text());
+    processHTML(html);
+  } catch (err) {
+    alert("Failed to fetch page. The site may require login.");
+    console.error(err);
+  }
 };
 
 // ---------- PASTE HTML MODE ----------
@@ -60,3 +67,4 @@ function displayImages(images) {
     results.appendChild(el);
   });
 }
+
