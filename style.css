@@ -15,6 +15,7 @@ textarea {
   background: #222;
   color: #0f0;
   padding: 10px;
+  border: 1px solid #444;
 }
 
 img {
@@ -23,7 +24,21 @@ img {
   border: 2px solid #555;
 }
 
-.mode-select button {
+.mode-select button,
+#ripUrl,
+#ripHtml,
+#downloadZip {
+  padding: 10px 20px;
+  background: #333;
+  color: #eee;
+  border: 1px solid #555;
+  cursor: pointer;
   margin-right: 10px;
-  padding: 10px;
+}
+
+.mode-select button:hover,
+#ripUrl:hover,
+#ripHtml:hover,
+#downloadZip:hover {
+  background: #444;
 }

@@ -11,7 +11,9 @@ document.getElementById("mode-html").onclick = () => {
   document.getElementById("html-section").classList.remove("hidden");
 };
 
-// Storage for ripped image URLs
+// -------------------------
+// STORAGE
+// -------------------------
 let rippedImages = [];
 
 // -------------------------
@@ -24,8 +26,9 @@ document.getElementById("ripUrl").onclick = async () => {
   try {
     const html = await fetch(url).then(r => r.text());
     processHTML(html);
+
   } catch (e) {
-    alert("Failed to fetch page. This site may block cross-origin requests.");
+    alert("Failed to fetch page.\nThis site may block cross-origin requests.");
   }
 };
 
@@ -35,6 +38,7 @@ document.getElementById("ripUrl").onclick = async () => {
 document.getElementById("ripHtml").onclick = () => {
   const html = document.getElementById("htmlInput").value.trim();
   if (!html) return alert("Paste HTML first");
+
   processHTML(html);
 };
 
@@ -45,12 +49,17 @@ function processHTML(html) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, "text/html");
 
-  let images = [...doc.querySelectorAll(".message-body img.bbImage, .bbWrapper img")];
+  // Extract ALL images
+  let images = [...doc.querySelectorAll("img")];
 
+  // Optional filtering
   images = images.filter(img => {
     const src = img.getAttribute("src") || "";
     if (!src) return false;
+
+    // avoid junk images
     if (src.includes("ads") || src.includes("banner") || src.includes("avatar")) return false;
+
     return true;
   });
 
@@ -68,7 +77,7 @@ function displayImages() {
   results.innerHTML = "";
 
   if (rippedImages.length === 0) {
-    results.innerHTML = "<p>No user images found.</p>";
+    results.innerHTML = "<p>No images found.</p>";
     return;
   }
 
@@ -81,7 +90,7 @@ function displayImages() {
 }
 
 // -------------------------
-// ZIP CREATION (JSZip)
+// ZIP CREATION
 // -------------------------
 async function downloadZip() {
   if (rippedImages.length === 0) return alert("Nothing to download");
@@ -91,20 +100,19 @@ async function downloadZip() {
 
   for (let i = 0; i < rippedImages.length; i++) {
     const url = rippedImages[i];
-    const fileName = `image_${String(i+1).padStart(4,"0")}.jpg`;
+    const fileName = `image_${String(i + 1).padStart(4, "0")}.jpg`;
 
     try {
       const blob = await fetch(url).then(r => r.blob());
       folder.file(fileName, blob);
     } catch (e) {
-      console.log("Failed:", url);
+      console.log("Failed to fetch:", url);
     }
   }
 
-  // Generate ZIP as blob
   const zipBlob = await zip.generateAsync({ type: "blob" });
 
-  // ---- iOS SAFARI COMPATIBLE DOWNLOAD ----
+  // iOS-friendly DataURL fallback
   const reader = new FileReader();
   reader.onloadend = () => {
     const base64data = reader.result;
@@ -117,10 +125,10 @@ async function downloadZip() {
     setTimeout(() => iframe.remove(), 2000);
   };
 
-  reader.readAsDataURL(new File([zipBlob], "images.zip", { type: "application/zip" }));
- // triggers download automatically on iOS
+  reader.readAsDataURL(
+    new File([zipBlob], "images.zip", { type: "application/zip" })
+  );
 }
-
 
 // -------------------------
 // SHOW ZIP BUTTON
