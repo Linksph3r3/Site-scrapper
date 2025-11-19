@@ -87,8 +87,7 @@ async function downloadZip() {
   if (rippedImages.length === 0) return alert("Nothing to download");
 
   const zip = new JSZip();
-
-  let folder = zip.folder("images");
+  const folder = zip.folder("images");
 
   for (let i = 0; i < rippedImages.length; i++) {
     const url = rippedImages[i];
@@ -98,17 +97,29 @@ async function downloadZip() {
       const blob = await fetch(url).then(r => r.blob());
       folder.file(fileName, blob);
     } catch (e) {
-      console.log("Failed to fetch:", url);
+      console.log("Failed:", url);
     }
   }
 
+  // Generate ZIP as blob
   const zipBlob = await zip.generateAsync({ type: "blob" });
 
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(zipBlob);
-  link.download = "images.zip";
-  link.click();
+  // ---- iOS SAFARI COMPATIBLE DOWNLOAD ----
+  const reader = new FileReader();
+  reader.onloadend = () => {
+    const base64data = reader.result;
+
+    const iframe = document.createElement("iframe");
+    iframe.style.display = "none";
+    iframe.src = base64data;
+    document.body.appendChild(iframe);
+
+    setTimeout(() => iframe.remove(), 2000);
+  };
+
+  reader.readAsDataURL(zipBlob); // triggers download automatically on iOS
 }
+
 
 // -------------------------
 // SHOW ZIP BUTTON
