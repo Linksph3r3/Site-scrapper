@@ -1,157 +1,62 @@
-const MAX_PAGES = 50; // safety limit so it doesn’t crawl forever
+// Switch modes
+document.getElementById("mode-url").onclick = () => {
+  document.getElementById("url-section").classList.remove("hidden");
+  document.getElementById("html-section").classList.add("hidden");
+};
 
-document.getElementById("ripButton").addEventListener("click", () => {
-    const url = document.getElementById("urlInput").value;
-    if (!url) return alert("Please enter a URL");
+document.getElementById("mode-html").onclick = () => {
+  document.getElementById("url-section").classList.add("hidden");
+  document.getElementById("html-section").classList.remove("hidden");
+};
 
-    startCrawler(url);
-});
+// ---------- URL MODE ----------
+document.getElementById("ripUrl").onclick = async () => {
+  const url = document.getElementById("pageUrl").value.trim();
+  if (!url) return alert("Enter a URL");
 
-async function startCrawler(startUrl) {
-    document.getElementById("results").innerHTML = "Crawling pages…";
-    const visited = new Set();
-    const toVisit = [startUrl];
-    const allImages = [];
+  const html = await fetch(url).then(r => r.text());
+  processHTML(html);
+};
 
-    const baseDomain = new URL(startUrl).hostname;
-    let pagesCrawled = 0;
+// ---------- PASTE HTML MODE ----------
+document.getElementById("ripHtml").onclick = () => {
+  const html = document.getElementById("htmlInput").value.trim();
+  if (!html) return alert("Paste HTML first");
+  processHTML(html);
+};
 
-    while (toVisit.length > 0 && pagesCrawled < MAX_PAGES) {
-        const url = toVisit.shift();
+// ---------- SHARED PROCESSOR ----------
+function processHTML(html) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
 
-        if (visited.has(url)) continue;
-        visited.add(url);
-        pagesCrawled++;
+  // Select ONLY user-posted images in .message-body
+  let images = [...doc.querySelectorAll(".message-body img.bbImage")];
 
-        const html = await fetchPage(url);
-        if (!html) continue;
+  // Filter out ads or junk images
+  images = images.filter(img => {
+    const src = img.getAttribute("src") || "";
+    if (src.includes("ads") || src.includes("banner") || src.includes("tracker")) return false;
+    if (img.closest("iframe")) return false;
+    return true;
+  });
 
-        const doc = new DOMParser().parseFromString(html, "text/html");
-
-        // Extract images on this page
-        const imgs = extractImages(doc, url);
-        allImages.push(...imgs);
-
-        // Discover new links to crawl
-        const newLinks = extractLinks(doc, url, baseDomain);
-
-        for (let link of newLinks) {
-            if (!visited.has(link) && !toVisit.includes(link)) {
-                toVisit.push(link);
-            }
-        }
-
-        document.getElementById("results").innerHTML =
-            `Crawled ${pagesCrawled} pages… Found ${allImages.length} images so far.`;
-    }
-
-    // Display all images
-    displayImages(allImages);
-
-    // Enable ZIP download
-    setupZipDownload(allImages);
-
-    document.getElementById("downloadZip").style.display = "block";
+  displayImages(images);
 }
 
-async function fetchPage(url) {
-    try {
-        const proxy = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
-        const response = await fetch(proxy);
-        return await response.text();
-    } catch (e) {
-        console.log("Failed to load:", url);
-        return null;
-    }
-}
-
-function extractImages(doc, pageUrl) {
-    const imageUrls = [];
-
-    // XenForo user-posted images ONLY
-    const tags = doc.querySelectorAll(".bbWrapper img");
-
-    tags.forEach(img => {
-        let src = img.getAttribute("src");
-        if (!src) return;
-
-        // Fix relative URLs
-        if (!src.startsWith("http")) {
-            try {
-                src = new URL(src, pageUrl).href;
-            } catch {
-                return;
-            }
-        }
-
-        imageUrls.push(src);
-    });
-
-    return imageUrls;
-}
-
-
-function extractLinks(doc, pageUrl, baseDomain) {
-    const links = [];
-    const anchors = doc.querySelectorAll("a");
-
-    anchors.forEach(a => {
-        let href = a.getAttribute("href");
-        if (!href) return;
-
-        // Fix relative URLs
-        try {
-            href = new URL(href, pageUrl).href;
-        } catch {
-            return;
-        }
-
-        // Only follow links on the same domain
-        if (new URL(href).hostname !== baseDomain) return;
-
-        // Prefer pages inside same directory
-        if (!href.startsWith(pageUrl.split("/").slice(0, 3).join("/"))) return;
-
-        links.push(href);
-    });
-
-    return links;
-}
-
+// ---------- DISPLAY ----------
 function displayImages(images) {
-    const results = document.getElementById("results");
-    results.innerHTML = "";
+  const results = document.getElementById("results");
+  results.innerHTML = "";
 
-    const uniqueImages = [...new Set(images)];
+  if (images.length === 0) {
+    results.innerHTML = "<p>No user images found.</p>";
+    return;
+  }
 
-    uniqueImages.forEach(url => {
-        const img = document.createElement("img");
-        img.src = url;
-        results.appendChild(img);
-    });
-}
-
-function setupZipDownload(images) {
-    const uniqueImages = [...new Set(images)];
-
-    document.getElementById("downloadZip").onclick = async () => {
-        const zip = new JSZip();
-
-        for (let i = 0; i < uniqueImages.length; i++) {
-            try {
-                const res = await fetch(uniqueImages[i]);
-                const blob = await res.blob();
-                zip.file(`image_${i}.jpg`, blob);
-            } catch (e) {
-                console.log("Failed:", uniqueImages[i]);
-            }
-        }
-
-        const zipFile = await zip.generateAsync({ type: "blob" });
-
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(zipFile);
-        a.download = "all_images.zip";
-        a.click();
-    };
+  images.forEach(img => {
+    const el = document.createElement("img");
+    el.src = img.src;
+    results.appendChild(el);
+  });
 }

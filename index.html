@@ -1,26 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Image Site Ripper</title>
-    <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>Image Ripper</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Image Site Ripper</h1>
+  <h1>SimpCity Image Ripper</h1>
 
-        <input id="urlInput" type="text" placeholder="Enter website URL" />
+  <div class="mode-select">
+    <button id="mode-url">URL Mode</button>
+    <button id="mode-html">Paste HTML Mode</button>
+  </div>
 
-        <button id="ripButton">Rip Images</button>
+  <div id="url-section">
+    <input id="pageUrl" type="text" placeholder="Enter page URL">
+    <button id="ripUrl">Rip Images</button>
+  </div>
 
-        <h2>Results</h2>
-        <div id="results"></div>
+  <div id="html-section" class="hidden">
+    <textarea id="htmlInput" placeholder="Paste HTML here..."></textarea>
+    <button id="ripHtml">Rip Pasted HTML</button>
+  </div>
 
-        <button id="downloadZip" style="display:none;">Download All (ZIP)</button>
-    </div>
+  <div id="results"></div>
 
-    <script src="JSZip.min.js"></script>
-    <script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
